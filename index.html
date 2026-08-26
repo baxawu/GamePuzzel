@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Unlock The World Steel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  body { background:#020617; }
+  @keyframes ws-shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-6px)} 80%{transform:translateX(6px)} }
+  @keyframes ws-pop { 0%{transform:scale(0.6);opacity:0} 60%{transform:scale(1.08);opacity:1} 100%{transform:scale(1)} }
+  @keyframes ws-glow { 0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,0.55)} 50%{box-shadow:0 0 0 10px rgba(249,115,22,0)} }
+  @keyframes ws-fall { 0%{transform:translateY(-10vh) rotate(0deg);opacity:1} 100%{transform:translateY(110vh) rotate(540deg);opacity:0.9} }
+  @keyframes ws-reveal { 0%{opacity:0; filter:brightness(2) blur(4px)} 100%{opacity:1; filter:brightness(1) blur(0)} }
+  .ws-shake{animation:ws-shake 0.5s ease-in-out}
+  .ws-pop{animation:ws-pop 0.35s ease-out}
+  .ws-glow{animation:ws-glow 1.6s ease-in-out infinite}
+  .ws-reveal{animation:ws-reveal 0.6s ease-out}
+  .ws-scrollbar::-webkit-scrollbar{height:6px;width:6px}
+  .ws-scrollbar::-webkit-scrollbar-thumb{background:#475569;border-radius:4px}
+  #root { min-height:100vh; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useRef, useMemo, useEffect } = React;
+
+/* ---------------- ICONS (lightweight inline SVG, no external icon lib needed) ---------------- */
+const Icon = ({ path, size = 16, className = "" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+    strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d={path} />
+  </svg>
+);
+const ICONS = {
+  lock: "M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2Z M7 11V7a5 5 0 0 1 10 0v4",
+  check: "M20 6 9 17l-5-5",
+  x: "M18 6 6 18 M6 6l12 12",
+  sparkles: "M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8",
+  trophy: "M8 21h8 M12 17v4 M17 4H7v6a5 5 0 0 0 10 0V4Z M17 5h3a2 2 0 0 1-2 5 M7 5H4a2 2 0 0 0 2 5",
+  upload: "M12 3v12 M7 8l5-5 5 5 M5 21h14",
+  plus: "M12 5v14 M5 12h14",
+  trash: "M3 6h18 M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2 M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6",
+  eye: "M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z",
+  reset: "M3 12a9 9 0 1 0 3-6.7 M3 5v6h6",
+  chevron: "M9 6l6 6-6 6",
+  gamepad: "M6 12h4 M8 10v4 M15 13h.01 M18 11h.01 M17.32 5H6.68a4 4 0 0 0-3.98 3.6l-.9 8.9a2.6 2.6 0 0 0 4.59 1.9L8.6 17h6.8l2.21 2.4a2.6 2.6 0 0 0 4.59-1.9l-.9-8.9A4 4 0 0 0 17.32 5Z",
+  puzzle: "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.36.36.86.62 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z",
+  settings: "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.36.36.86.62 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z",
+  shuffle: "M16 3h5v5 M4 20 21 3 M21 16v5h-5 M15 15l6 6 M4 4l5 5",
+};
+const I = (name, size, className) => <Icon path={ICONS[name]} size={size} className={className} />;
+
+/* ---------------- DEFAULT DATA ---------------- */
+const COLS = 7, ROWS = 2, TOTAL = COLS * ROWS;
+const STORAGE_KEY = "unlock_world_steel_v1";
+
+function makeDefaultImage() {
+  const svg = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="1400" height="400" viewBox="0 0 1400 400">
+    <defs>
+      <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#0f172a"/><stop offset="45%" stop-color="#1e293b"/>
+        <stop offset="70%" stop-color="#334155"/><stop offset="100%" stop-color="#0f172a"/>
+      </linearGradient>
+      <linearGradient id="beam" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#f97316" stop-opacity="0"/>
+        <stop offset="50%" stop-color="#f97316" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <rect width="1400" height="400" fill="url(#g)"/>
+    ${Array.from({length:10}).map((_,i)=>`<rect x="${i*150-60}" y="0" width="40" height="400" fill="url(#beam)" transform="skewX(-18)"/>`).join("")}
+    ${Array.from({length:6}).map((_,i)=>`<line x1="0" y1="${70+i*55}" x2="1400" y2="${40+i*55}" stroke="#f8fafc" stroke-opacity="0.04" stroke-width="2"/>`).join("")}
+    <text x="700" y="195" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="92" fill="#f8fafc" letter-spacing="6">WORLD STEEL</text>
+    <text x="700" y="255" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="30" fill="#f97316" letter-spacing="14">G R O U P</text>
+    <circle cx="120" cy="330" r="3" fill="#f97316"/><circle cx="1280" cy="330" r="3" fill="#f97316"/>
+    <circle cx="120" cy="70" r="3" fill="#f97316"/><circle cx="1280" cy="70" r="3" fill="#f97316"/>
+  </svg>`;
+  return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+}
+
+const DEFAULT_CORRECT_MESSAGES = [
+  "Quá dữ! Bộ não này được bảo trì ở đâu vậy?",
+  "Chính xác! HR cần tuyển bạn ngay lập tức.",
+  "Đúng rồi! Sherlock Holmes cũng phải xin vía.",
+  "Não hoạt động 200% công suất!",
+  "Chuẩn không cần chỉnh!",
+  "Đỉnh! Cái này không phải may mắn đâu nhé.",
+  "Một bước gần hơn đến kho báu!",
+];
+const DEFAULT_WRONG_MESSAGES = [
+  "Ủa? Tự tin dữ vậy?",
+  "Đáp án rất hay... nhưng không đúng.",
+  "Não đang loading, vui lòng thử lại.",
+  "Gần rồi... nhưng vẫn chưa đủ gần.",
+  "Câu trả lời này đã được gửi vào bộ phận... sai.",
+  "Không sao, Einstein cũng từng có ngày nghỉ.",
+  "Hãy bình tĩnh. Công ty vẫn còn nhiều ô lắm.",
+];
+
+function defaultPuzzles() {
+  const p = [
+    { question: "World Steel chuyên về lĩnh vực gì?", type: "mc",
+      options: ["Gia công kết cấu thép", "Kinh doanh bất động sản", "Sản xuất bánh kẹo", "Trồng trọt nông nghiệp"],
+      correctAnswer: "Gia công kết cấu thép" },
+    { question: '"Thép kết cấu" trong tiếng Anh là gì?', type: "mc",
+      options: ["Structural Steel", "Sweet Metal", "Steel Sweet", "Structure Only"],
+      correctAnswer: "Structural Steel" },
+    { question: "PEB là viết tắt của gì?", type: "mc",
+      options: ["Pre-Engineered Building", "Personal Energy Board", "Public Electric Base", "Pre-Excavated Basement"],
+      correctAnswer: "Pre-Engineered Building" },
+    { question: "Đâu là một tiêu chuẩn gia công kết cấu thép quốc tế mà công ty áp dụng?", type: "mc",
+      options: ["AS/NZS 5131", "ISO 9001-Bakery", "HACCP", "IATF Food Safety"],
+      correctAnswer: "AS/NZS 5131" },
+    { question: "BIM được sử dụng để làm gì?", type: "mc",
+      options: ["Mô hình hóa thông tin công trình để thiết kế & quản lý dự án", "Bán hàng trực tuyến", "Quản lý lương nhân viên", "Nấu ăn công nghiệp"],
+      correctAnswer: "Mô hình hóa thông tin công trình để thiết kế & quản lý dự án" },
+    { question: "Đúng hay Sai: AS/NZS 5131 là tiêu chuẩn gia công & lắp dựng kết cấu thép (Úc/New Zealand).", type: "tf",
+      options: ["Đúng", "Sai"], correctAnswer: "Đúng" },
+    { question: "EN 1090 liên quan đến sản phẩm gì?", type: "mc",
+      options: ["Kết cấu thép và nhôm (tiêu chuẩn châu Âu)", "Đồ nội thất gỗ", "Thiết bị điện gia dụng", "Vật liệu nhựa dân dụng"],
+      correctAnswer: "Kết cấu thép và nhôm (tiêu chuẩn châu Âu)" },
+    { question: "Công đoạn Shot Blasting dùng để làm gì?", type: "mc",
+      options: ["Làm sạch bề mặt thép trước khi sơn", "Cắt thép thành tấm mỏng", "Hàn hai tấm thép lại với nhau", "Đóng gói sản phẩm"],
+      correctAnswer: "Làm sạch bề mặt thép trước khi sơn" },
+    { question: "Welding là gì?", type: "mc",
+      options: ["Hàn - phương pháp nối kim loại bằng nhiệt", "Sơn phủ bề mặt", "Đo đạc kích thước", "Vận chuyển hàng hóa"],
+      correctAnswer: "Hàn - phương pháp nối kim loại bằng nhiệt" },
+    { question: "CNC dùng để làm gì trong sản xuất?", type: "mc",
+      options: ["Gia công cắt/khoan tự động bằng máy tính điều khiển số", "Lưu trữ dữ liệu kế toán", "Quản lý email công ty", "Thiết kế logo"],
+      correctAnswer: "Gia công cắt/khoan tự động bằng máy tính điều khiển số" },
+    { question: '"Structural Steel" nghĩa là gì?', type: "mc",
+      options: ["Thép dùng làm khung chịu lực cho công trình", "Thép trang trí nội thất", "Thép dùng làm đồ gia dụng", "Thép tái chế từ vỏ lon"],
+      correctAnswer: "Thép dùng làm khung chịu lực cho công trình" },
+    { question: '"Fabrication" trong ngành thép nghĩa là gì?', type: "mc",
+      options: ["Quá trình gia công/chế tạo kết cấu thép từ nguyên liệu", "Quá trình vận chuyển thép", "Quá trình bán lẻ thép", "Quá trình tái chế giấy"],
+      correctAnswer: "Quá trình gia công/chế tạo kết cấu thép từ nguyên liệu" },
+    { question: "Một ưu điểm nổi bật của thép kết cấu là gì?", type: "mc",
+      options: ["Độ bền cao, thi công nhanh", "Dễ tan chảy ở nhiệt độ phòng", "Không thể tái chế", "Rất nhẹ như giấy"],
+      correctAnswer: "Độ bền cao, thi công nhanh" },
+    { question: "Câu hỏi vui: Loại thép nào không bao giờ... bị gỉ sét? (gõ câu trả lời)", type: "text",
+      options: [], correctAnswer: "inox" },
+  ];
+  return p.map((item, i) => ({ id: i + 1, ...item }));
+}
+
+const DEFAULT_GAME = {
+  gameName: "UNLOCK THE WORLD STEEL",
+  subtitle: "Giải đúng – Mở khóa – Khám phá toàn cảnh!",
+  companyName: "World Steel Group",
+  mainImage: makeDefaultImage(),
+  winTitle: "🎉 CONGRATULATIONS!",
+  winMessage: "Bạn đã mở khóa toàn bộ bức tranh World Steel Group!",
+  winButton: "KHÁM PHÁ TOÀN BỘ",
+  correctMessages: DEFAULT_CORRECT_MESSAGES,
+  wrongMessages: DEFAULT_WRONG_MESSAGES,
+  puzzles: defaultPuzzles(),
+};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+function saveState(state) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+}
+
+function Confetti({ count = 60 }) {
+  const pieces = useMemo(() => Array.from({ length: count }).map((_, i) => ({
+    id: i, left: Math.random() * 100, delay: Math.random() * 0.6,
+    duration: 2.2 + Math.random() * 1.6, size: 6 + Math.random() * 8,
+    color: ["#f97316", "#fb923c", "#facc15", "#f8fafc", "#38bdf8"][i % 5],
+    rotate: Math.random() * 360,
+  })), [count]);
+  return (
+    <div className="pointer-events-none fixed inset-0 overflow-hidden z-[70]">
+      {pieces.map((p) => (
+        <div key={p.id} style={{ position: "absolute", left: `${p.left}%`, top: 0,
+          width: p.size, height: p.size * 0.4, background: p.color,
+          transform: `rotate(${p.rotate}deg)`,
+          animation: `ws-fall ${p.duration}s ease-in ${p.delay}s forwards` }} />
+      ))}
+    </div>
+  );
+}
+
+function App() {
+  const saved = loadState();
+  const [page, setPage] = useState("play");
+  const [game, setGame] = useState(saved?.game || DEFAULT_GAME);
+  const [unlocked, setUnlocked] = useState(saved?.unlocked || Array(TOTAL).fill(false));
+  const [attempted, setAttempted] = useState(saved?.attempted || Array(TOTAL).fill(false));
+  const [score, setScore] = useState(saved?.score || 0);
+  const [activeId, setActiveId] = useState(null);
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [textInput, setTextInput] = useState("");
+  const [feedback, setFeedback] = useState(null);
+  const [showWin, setShowWin] = useState(false);
+  const [showConfettiBurst, setShowConfettiBurst] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showFullImage, setShowFullImage] = useState(false);
+  const fileInputRef = useRef(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  useEffect(() => { saveState({ game, unlocked, attempted, score }); }, [game, unlocked, attempted, score]);
+
+  const unlockedCount = unlocked.filter(Boolean).length;
+  const progressPct = Math.round((unlockedCount / TOTAL) * 100);
+
+  const openPuzzle = (id) => {
+    if (unlocked[id - 1]) return;
+    setActiveId(id); setSelectedOption(null); setTextInput(""); setFeedback(null);
+  };
+  const closeModal = () => { setActiveId(null); setSelectedOption(null); setTextInput(""); setFeedback(null); };
+  const randomFrom = (arr) => arr[Math.floor(Math.random() * arr.length)] || "";
+
+  const submitAnswer = () => {
+    const puzzle = game.puzzles.find((p) => p.id === activeId);
+    if (!puzzle) return;
+    let userAnswer = puzzle.type === "text" ? textInput.trim() : selectedOption;
+    if (!userAnswer) return;
+    const isCorrect = puzzle.type === "text"
+      ? userAnswer.toLowerCase() === String(puzzle.correctAnswer).toLowerCase()
+      : userAnswer === puzzle.correctAnswer;
+    const idx = puzzle.id - 1;
+    const wasAttemptedBefore = attempted[idx];
+
+    if (isCorrect) {
+      const newUnlocked = [...unlocked]; newUnlocked[idx] = true; setUnlocked(newUnlocked);
+      setScore((s) => s + (wasAttemptedBefore ? 50 : 100));
+      setFeedback({ correct: true, message: randomFrom(game.correctMessages) });
+      if (newUnlocked.every(Boolean)) {
+        setTimeout(() => { setShowWin(true); setShowConfettiBurst(true); setTimeout(() => setShowConfettiBurst(false), 3500); }, 700);
+      }
+    } else {
+      const newAttempted = [...attempted]; newAttempted[idx] = true; setAttempted(newAttempted);
+      setFeedback({ correct: false, message: randomFrom(game.wrongMessages) });
+    }
+  };
+
+  const resetGame = () => {
+    setUnlocked(Array(TOTAL).fill(false));
+    setAttempted(Array(TOTAL).fill(false));
+    setScore(0); setShowWin(false); setActiveId(null); setShowResetConfirm(false); setShowFullImage(false);
+  };
+
+  const handleImageFile = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => setGame((g) => ({ ...g, mainImage: e.target.result }));
+    reader.readAsDataURL(file);
+  };
+
+  const tileBgStyle = (index) => {
+    const col = index % COLS, row = Math.floor(index / COLS);
+    return {
+      backgroundImage: `url(${game.mainImage})`,
+      backgroundSize: `${COLS * 100}% ${ROWS * 100}%`,
+      backgroundPosition: `${(col / (COLS - 1)) * 100}% ${(row / (ROWS - 1)) * 100}%`,
+    };
+  };
+
+  const NavBar = () => (
+    <div className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950/90 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded bg-orange-500/20 text-orange-400">{I("puzzle",18)}</div>
+          <span className="font-black tracking-tight text-slate-100">{game.companyName || "World Steel"}</span>
+        </div>
+        <div className="flex gap-1 rounded-lg bg-slate-900 p-1">
+          {[{id:"play",label:"Chơi Game",icon:"gamepad"},{id:"setup",label:"Puzzle Setup",icon:"puzzle"},{id:"settings",label:"Settings",icon:"settings"}].map((t) => (
+            <button key={t.id} onClick={() => setPage(t.id)}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition ${page === t.id ? "bg-orange-500 text-slate-950" : "text-slate-400 hover:text-slate-200"}`}>
+              {I(t.icon,14)}<span className="hidden sm:inline">{t.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const PlayPage = () => (
+    <div className="mx-auto max-w-6xl px-4 pb-20 pt-8">
+      <div className="mb-8 text-center">
+        <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.3em] text-orange-400">{game.companyName}</p>
+        <h1 className="text-3xl font-black uppercase tracking-tight text-slate-50 sm:text-5xl">{game.gameName}</h1>
+        <p className="mt-2 text-sm text-slate-400 sm:text-base">{game.subtitle}</p>
+      </div>
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-center">
+          <p className="text-[10px] uppercase tracking-wider text-slate-500">Score</p>
+          <p className="text-2xl font-black text-orange-400">{score}</p>
+        </div>
+        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-center">
+          <p className="text-[10px] uppercase tracking-wider text-slate-500">Unlocked</p>
+          <p className="text-2xl font-black text-slate-100">{unlockedCount}/{TOTAL}</p>
+        </div>
+        <div className="col-span-2 flex flex-col justify-center rounded-lg border border-slate-800 bg-slate-900/60 p-3">
+          <p className="mb-1 text-[10px] uppercase tracking-wider text-slate-500">Progress</p>
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-800">
+            <div className="h-full rounded-full bg-gradient-to-r from-orange-600 to-amber-400 transition-all duration-500" style={{ width: `${progressPct}%` }} />
+          </div>
+        </div>
+      </div>
+      <div className="mb-8 grid grid-cols-5 gap-2 sm:grid-cols-7">
+        {game.puzzles.map((p, i) => {
+          const isUnlocked = unlocked[i], isActive = activeId === p.id;
+          return (
+            <button key={p.id} onClick={() => openPuzzle(p.id)} disabled={isUnlocked}
+              className={`group relative flex aspect-square flex-col items-center justify-center rounded-lg border text-xs font-bold transition ${
+                isUnlocked ? "border-emerald-600/50 bg-emerald-500/10 text-emerald-400"
+                : isActive ? "ws-glow border-orange-500 bg-orange-500/10 text-orange-300"
+                : "border-slate-700 bg-slate-900 text-slate-400 hover:border-orange-500/60 hover:text-orange-300"}`}>
+              {isUnlocked ? I("check",16) : isActive ? I("sparkles",16) : I("lock",14)}
+              <span className="mt-1">{String(p.id).padStart(2, "0")}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="mb-4 flex items-center gap-2">
+        <div className="h-px flex-1 bg-slate-800" />
+        <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-slate-500">The Big Picture</p>
+        <div className="h-px flex-1 bg-slate-800" />
+      </div>
+      <div className="ws-scrollbar overflow-x-auto rounded-xl border border-slate-800 bg-slate-900 p-1.5">
+        <div className="relative mx-auto grid min-w-[560px]" style={{ aspectRatio: `${COLS} / ${ROWS}`, gridTemplateColumns: `repeat(${COLS}, 1fr)`, gridTemplateRows: `repeat(${ROWS}, 1fr)` }}>
+          {Array.from({ length: TOTAL }).map((_, i) => {
+            const id = i + 1, isUnlocked = unlocked[i];
+            return (
+              <div key={i} className="relative overflow-hidden" style={tileBgStyle(i)}>
+                {isUnlocked ? <div className="ws-reveal absolute inset-0" /> : (
+                  <button onClick={() => openPuzzle(id)}
+                    className={`absolute inset-0 flex flex-col items-center justify-center gap-1 border border-slate-950/60 bg-slate-950/85 backdrop-blur-[1px] transition hover:bg-slate-950/70 ${activeId === id ? "bg-orange-950/60" : ""}`}>
+                    {I("lock",16,"text-slate-500")}
+                    <span className="text-[11px] font-bold text-slate-400">{String(id).padStart(2, "0")}</span>
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <p className="mt-3 text-center text-[11px] text-slate-600">Kéo ngang để xem trên màn hình nhỏ — đây là một bức hình duy nhất được chia thành {TOTAL} vùng.</p>
+    </div>
+  );
+
+  const activePuzzle = game.puzzles.find((p) => p.id === activeId);
+  const PuzzleModal = () => {
+    if (!activePuzzle) return null;
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
+        <div className={`ws-pop w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl ${feedback && !feedback.correct ? "ws-shake" : ""}`}>
+          <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-orange-400">Puzzle #{String(activePuzzle.id).padStart(2, "0")}</p>
+            <button onClick={closeModal} className="text-slate-500 hover:text-slate-200">{I("x",18)}</button>
+          </div>
+          {!feedback ? (
+            <div className="px-5 py-5">
+              <p className="mb-5 text-base font-semibold leading-snug text-slate-100">{activePuzzle.question}</p>
+              {activePuzzle.type === "text" ? (
+                <input autoFocus value={textInput} onChange={(e) => setTextInput(e.target.value)} placeholder="Nhập câu trả lời..."
+                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-orange-500" />
+              ) : (
+                <div className="space-y-2">
+                  {activePuzzle.options.map((opt, i) => (
+                    <button key={i} onClick={() => setSelectedOption(opt)}
+                      className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition ${selectedOption === opt ? "border-orange-500 bg-orange-500/10 text-orange-200" : "border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-500"}`}>
+                      <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${selectedOption === opt ? "border-orange-400" : "border-slate-600"}`}>
+                        {selectedOption === opt && <span className="h-2 w-2 rounded-full bg-orange-400" />}
+                      </span>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button onClick={submitAnswer} disabled={activePuzzle.type === "text" ? !textInput.trim() : !selectedOption}
+                className="mt-5 w-full rounded-lg bg-orange-500 py-2.5 text-sm font-bold uppercase tracking-wide text-slate-950 transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-30">
+                Trả Lời
+              </button>
+            </div>
+          ) : (
+            <div className="px-5 py-6 text-center">
+              <div className="mb-3 flex justify-center">
+                {feedback.correct ? (
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">{I("check",28)}</div>
+                ) : (
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-rose-500/15 text-rose-400">{I("x",28)}</div>
+                )}
+              </div>
+              <p className={`mb-2 text-lg font-black ${feedback.correct ? "text-emerald-400" : "text-rose-400"}`}>{feedback.correct ? "🎉 CHÍNH XÁC!" : "😂 Ôi..."}</p>
+              <p className="mb-4 text-sm italic text-slate-300">&ldquo;{feedback.message}&rdquo;</p>
+              <p className="mb-5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {feedback.correct ? `🔓 Đã mở khóa ô #${String(activePuzzle.id).padStart(2, "0")}!` : `🔒 Ô #${String(activePuzzle.id).padStart(2, "0")} vẫn đang khóa!`}
+              </p>
+              <button onClick={() => { if (feedback.correct) { closeModal(); } else { setFeedback(null); setSelectedOption(null); setTextInput(""); } }}
+                className="w-full rounded-lg bg-slate-100 py-2.5 text-sm font-bold uppercase tracking-wide text-slate-950 hover:bg-white">
+                {feedback.correct ? "Tiếp Tục" : "Thử Lại"}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const WinModal = () => {
+    if (!showWin) return null;
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/90 p-4">
+        {showConfettiBurst && <Confetti />}
+        <div className="ws-pop relative w-full max-w-lg rounded-2xl border border-orange-500/40 bg-slate-900 p-8 text-center shadow-2xl">
+          <div className="mx-auto mb-3 text-amber-400">{I("trophy",48)}</div>
+          <p className="mb-1 text-2xl font-black text-orange-400">{game.winTitle}</p>
+          <p className="mb-1 text-lg font-black uppercase tracking-wide text-slate-100">You Unlocked The Big Picture</p>
+          <p className="mb-4 text-sm text-slate-400">{game.winMessage}</p>
+          <p className="mb-6 text-xs font-bold uppercase tracking-widest text-slate-500">🏆 {TOTAL}/{TOTAL} — Master Puzzle Solver — Score {score}</p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button onClick={() => { setShowWin(false); setShowFullImage(true); }}
+              className="flex-1 rounded-lg bg-orange-500 py-2.5 text-sm font-bold uppercase tracking-wide text-slate-950 hover:bg-orange-400">{game.winButton}</button>
+            <button onClick={resetGame} className="flex-1 rounded-lg border border-slate-700 py-2.5 text-sm font-bold uppercase tracking-wide text-slate-300 hover:border-slate-500">Chơi Lại</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const FullImageModal = () => {
+    if (!showFullImage) return null;
+    return (
+      <div className="fixed inset-0 z-[65] flex items-center justify-center bg-slate-950/95 p-4" onClick={() => setShowFullImage(false)}>
+        <button className="absolute right-5 top-5 text-slate-400 hover:text-white" onClick={() => setShowFullImage(false)}>{I("x",24)}</button>
+        <img src={game.mainImage} alt="Full company picture" className="ws-reveal max-h-[85vh] w-full max-w-5xl rounded-xl object-contain" onClick={(e) => e.stopPropagation()} />
+      </div>
+    );
+  };
+
+  const updatePuzzle = (id, patch) => setGame((g) => ({ ...g, puzzles: g.puzzles.map((p) => (p.id === id ? { ...p, ...patch } : p)) }));
+  const updateOption = (id, idx, value) => setGame((g) => ({ ...g, puzzles: g.puzzles.map((p) => p.id === id ? { ...p, options: p.options.map((o, i) => (i === idx ? value : o)) } : p) }));
+  const [openPuzzleEdit, setOpenPuzzleEdit] = useState(1);
+
+  const SetupPage = () => (
+    <div className="mx-auto max-w-4xl px-4 pb-20 pt-8">
+      <h2 className="mb-1 text-2xl font-black uppercase tracking-tight text-slate-100">Puzzle Setup</h2>
+      <p className="mb-6 text-sm text-slate-500">Chỉnh sửa {TOTAL} câu đố. Chỉ Admin (bạn) mới thấy đáp án đúng ở đây.</p>
+      <div className="space-y-3">
+        {game.puzzles.map((p) => {
+          const isOpen = openPuzzleEdit === p.id;
+          return (
+            <div key={p.id} className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60">
+              <button onClick={() => setOpenPuzzleEdit(isOpen ? null : p.id)} className="flex w-full items-center justify-between px-4 py-3 text-left">
+                <span className="flex items-center gap-3">
+                  <span className="flex h-7 w-7 items-center justify-center rounded bg-orange-500/15 text-xs font-black text-orange-400">{String(p.id).padStart(2, "0")}</span>
+                  <span className="line-clamp-1 text-sm font-semibold text-slate-200">{p.question || "(chưa có câu hỏi)"}</span>
+                </span>
+                <span className={`text-slate-500 transition ${isOpen ? "rotate-90" : ""}`}>{I("chevron",16)}</span>
+              </button>
+              {isOpen && (
+                <div className="space-y-3 border-t border-slate-800 px-4 py-4">
+                  <div>
+                    <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">Question</label>
+                    <textarea value={p.question} onChange={(e) => updatePuzzle(p.id, { question: e.target.value })} rows={2}
+                      className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-orange-500" />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">Answer Type</label>
+                    <select value={p.type} onChange={(e) => {
+                        const type = e.target.value; const patch = { type };
+                        if (type === "tf") patch.options = ["Đúng", "Sai"];
+                        if (type === "mc" && p.type !== "mc") patch.options = ["", "", "", ""];
+                        if (type === "text") patch.options = [];
+                        updatePuzzle(p.id, patch);
+                      }} className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-orange-500">
+                      <option value="mc">Multiple Choice</option>
+                      <option value="tf">True / False</option>
+                      <option value="text">Text Answer</option>
+                    </select>
+                  </div>
+                  {p.type === "mc" && (
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {p.options.map((opt, i) => (
+                        <div key={i}>
+                          <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">Option {String.fromCharCode(65 + i)}</label>
+                          <input value={opt} onChange={(e) => updateOption(p.id, i, e.target.value)}
+                            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-orange-500" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div>
+                    <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">Correct Answer</label>
+                    {p.type === "text" ? (
+                      <input value={p.correctAnswer} onChange={(e) => updatePuzzle(p.id, { correctAnswer: e.target.value })}
+                        className="w-full rounded-lg border border-emerald-700/50 bg-emerald-950/20 px-3 py-2 text-sm text-emerald-200 outline-none focus:border-emerald-500" />
+                    ) : (
+                      <select value={p.correctAnswer} onChange={(e) => updatePuzzle(p.id, { correctAnswer: e.target.value })}
+                        className="w-full rounded-lg border border-emerald-700/50 bg-emerald-950/20 px-3 py-2 text-sm text-emerald-200 outline-none focus:border-emerald-500">
+                        <option value="">— chọn đáp án đúng —</option>
+                        {p.options.map((opt, i) => opt && <option key={i} value={opt}>{opt}</option>)}
+                      </select>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const addMessage = (field) => setGame((g) => ({ ...g, [field]: [...g[field], ""] }));
+  const updateMessage = (field, idx, value) => setGame((g) => ({ ...g, [field]: g[field].map((m, i) => (i === idx ? value : m)) }));
+  const removeMessage = (field, idx) => setGame((g) => ({ ...g, [field]: g[field].filter((_, i) => i !== idx) }));
+
+  const MessageList = ({ title, field, hint }) => (
+    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-bold uppercase tracking-wide text-slate-200">{title}</h3>
+          <p className="text-[11px] text-slate-500">{hint}</p>
+        </div>
+        <button onClick={() => addMessage(field)} className="flex items-center gap-1 rounded-lg border border-slate-700 px-2.5 py-1.5 text-[11px] font-bold uppercase text-slate-300 hover:border-orange-500 hover:text-orange-300">
+          {I("plus",12)} Add
+        </button>
+      </div>
+      <div className="space-y-2">
+        {game[field].map((msg, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <span className="w-5 shrink-0 text-right text-[11px] text-slate-600">{i + 1}.</span>
+            <input value={msg} onChange={(e) => updateMessage(field, i, e.target.value)}
+              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 outline-none focus:border-orange-500" />
+            <button onClick={() => removeMessage(field, i)} className="shrink-0 text-slate-600 hover:text-rose-400">{I("trash",15)}</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const SettingsPage = () => (
+    <div className="mx-auto max-w-3xl px-4 pb-20 pt-8">
+      <h2 className="mb-1 text-2xl font-black uppercase tracking-tight text-slate-100">Game Settings</h2>
+      <p className="mb-6 text-sm text-slate-500">Dữ liệu được lưu tự động vào trình duyệt (localStorage) — tải lại trang sẽ không mất tiến trình.</p>
+      <div className="space-y-6">
+        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+          <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-200">General</h3>
+          <div className="space-y-3">
+            <div>
+              <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">Game Name</label>
+              <input value={game.gameName} onChange={(e) => setGame((g) => ({ ...g, gameName: e.target.value }))}
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-orange-500" />
+            </div>
+            <div>
+              <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">Subtitle</label>
+              <input value={game.subtitle} onChange={(e) => setGame((g) => ({ ...g, subtitle: e.target.value }))}
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-orange-500" />
+            </div>
+            <div>
+              <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">Company Name</label>
+              <input value={game.companyName} onChange={(e) => setGame((g) => ({ ...g, companyName: e.target.value }))}
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-orange-500" />
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+          <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-200">Main Image</h3>
+          <div onDragOver={(e) => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => { e.preventDefault(); setDragOver(false); handleImageFile(e.dataTransfer.files?.[0]); }}
+            onClick={() => fileInputRef.current?.click()}
+            className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed py-8 text-center transition ${dragOver ? "border-orange-500 bg-orange-500/5" : "border-slate-700 hover:border-slate-500"}`}>
+            {I("upload",22,"text-slate-500")}
+            <p className="text-sm font-semibold text-slate-300">Drag &amp; drop image</p>
+            <p className="text-[11px] text-slate-600">JPG · PNG · WEBP</p>
+            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/jpg" className="hidden" onChange={(e) => handleImageFile(e.target.files?.[0])} />
+          </div>
+          {game.mainImage && (
+            <div className="mt-3">
+              <img src={game.mainImage} alt="preview" className="w-full rounded-lg border border-slate-800" />
+              <button onClick={() => setGame((g) => ({ ...g, mainImage: makeDefaultImage() }))} className="mt-2 flex items-center gap-1 text-[11px] font-bold uppercase text-rose-400 hover:text-rose-300">
+                {I("x",12)} Remove Image
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+          <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-200">Image Grid Settings</h3>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="rounded-lg bg-slate-950 py-3"><p className="text-[10px] uppercase text-slate-500">Columns</p><p className="text-xl font-black text-slate-200">{COLS}</p></div>
+            <div className="rounded-lg bg-slate-950 py-3"><p className="text-[10px] uppercase text-slate-500">Rows</p><p className="text-xl font-black text-slate-200">{ROWS}</p></div>
+            <div className="rounded-lg bg-slate-950 py-3"><p className="text-[10px] uppercase text-slate-500">Total Tiles</p><p className="text-xl font-black text-orange-400">{TOTAL}</p></div>
+          </div>
+          <p className="mt-3 text-[11px] text-slate-600">Cố định 7 × 2 = 14 để khớp với 14 puzzle.</p>
+        </div>
+
+        <MessageList title="Correct Answer Messages" field="correctMessages" hint="Random 1 câu khi trả lời đúng" />
+        <MessageList title="Wrong Answer Messages" field="wrongMessages" hint="Random 1 câu khi trả lời sai" />
+
+        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+          <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-200">Final Win Message</h3>
+          <div className="space-y-3">
+            <div>
+              <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">Title</label>
+              <input value={game.winTitle} onChange={(e) => setGame((g) => ({ ...g, winTitle: e.target.value }))}
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-orange-500" />
+            </div>
+            <div>
+              <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">Message</label>
+              <input value={game.winMessage} onChange={(e) => setGame((g) => ({ ...g, winMessage: e.target.value }))}
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-orange-500" />
+            </div>
+            <div>
+              <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">Button</label>
+              <input value={game.winButton} onChange={(e) => setGame((g) => ({ ...g, winButton: e.target.value }))}
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-orange-500" />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <button onClick={() => setPage("play")} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-orange-500 py-2.5 text-sm font-bold uppercase tracking-wide text-slate-950 hover:bg-orange-400">
+            {I("eye",15)} Preview Game
+          </button>
+          <button onClick={() => setShowResetConfirm(true)} className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-rose-700/50 py-2.5 text-sm font-bold uppercase tracking-wide text-rose-400 hover:bg-rose-950/30">
+            {I("reset",15)} Reset Game
+          </button>
+        </div>
+
+        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-slate-200">{I("shuffle",14)} Demo Mode</h3>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => {
+                const idx = unlocked.findIndex((u) => !u); if (idx === -1) return;
+                const nu = [...unlocked]; nu[idx] = true; setUnlocked(nu); setScore((s) => s + 100);
+                if (nu.every(Boolean)) { setShowWin(true); setShowConfettiBurst(true); setTimeout(() => setShowConfettiBurst(false), 3500); }
+              }} className="rounded-lg border border-slate-700 px-3 py-1.5 text-[11px] font-bold uppercase text-slate-300 hover:border-orange-500 hover:text-orange-300">
+              Unlock Next Tile
+            </button>
+            <button onClick={resetGame} className="rounded-lg border border-slate-700 px-3 py-1.5 text-[11px] font-bold uppercase text-slate-300 hover:border-orange-500 hover:text-orange-300">
+              Reset Game
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const ResetConfirm = () => {
+    if (!showResetConfirm) return null;
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
+        <div className="ws-pop w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 text-center">
+          <p className="mb-4 text-sm font-semibold text-slate-200">Bạn có chắc muốn reset toàn bộ tiến trình?</p>
+          <div className="flex gap-2">
+            <button onClick={() => setShowResetConfirm(false)} className="flex-1 rounded-lg border border-slate-700 py-2 text-xs font-bold uppercase text-slate-300">Cancel</button>
+            <button onClick={resetGame} className="flex-1 rounded-lg bg-rose-600 py-2 text-xs font-bold uppercase text-white hover:bg-rose-500">Reset</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <NavBar />
+      {page === "play" && <PlayPage />}
+      {page === "setup" && <SetupPage />}
+      {page === "settings" && <SettingsPage />}
+      <PuzzleModal />
+      <WinModal />
+      <FullImageModal />
+      <ResetConfirm />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
