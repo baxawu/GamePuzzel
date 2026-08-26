@@ -242,109 +242,18 @@ function Confetti({
     }
   })));
 }
-function App() {
-  const saved = loadState();
-  const [page, setPage] = useState("play");
-  const [game, setGame] = useState(saved?.game || DEFAULT_GAME);
-  const [unlocked, setUnlocked] = useState(saved?.unlocked || Array(TOTAL).fill(false));
-  const [attempted, setAttempted] = useState(saved?.attempted || Array(TOTAL).fill(false));
-  const [score, setScore] = useState(saved?.score || 0);
-  const [activeId, setActiveId] = useState(null);
-  const [selectedOption, setSelectedOption] = useState(null);
-  const [textInput, setTextInput] = useState("");
-  const [feedback, setFeedback] = useState(null);
-  const [showWin, setShowWin] = useState(false);
-  const [showConfettiBurst, setShowConfettiBurst] = useState(false);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [showFullImage, setShowFullImage] = useState(false);
-  const fileInputRef = useRef(null);
-  const [dragOver, setDragOver] = useState(false);
-  useEffect(() => {
-    saveState({
-      game,
-      unlocked,
-      attempted,
-      score
-    });
-  }, [game, unlocked, attempted, score]);
-  const unlockedCount = unlocked.filter(Boolean).length;
-  const progressPct = Math.round(unlockedCount / TOTAL * 100);
-  const openPuzzle = id => {
-    if (unlocked[id - 1]) return;
-    setActiveId(id);
-    setSelectedOption(null);
-    setTextInput("");
-    setFeedback(null);
-  };
-  const closeModal = () => {
-    setActiveId(null);
-    setSelectedOption(null);
-    setTextInput("");
-    setFeedback(null);
-  };
-  const randomFrom = arr => arr[Math.floor(Math.random() * arr.length)] || "";
-  const submitAnswer = () => {
-    const puzzle = game.puzzles.find(p => p.id === activeId);
-    if (!puzzle) return;
-    let userAnswer = puzzle.type === "text" ? textInput.trim() : selectedOption;
-    if (!userAnswer) return;
-    const isCorrect = puzzle.type === "text" ? userAnswer.toLowerCase() === String(puzzle.correctAnswer).toLowerCase() : userAnswer === puzzle.correctAnswer;
-    const idx = puzzle.id - 1;
-    const wasAttemptedBefore = attempted[idx];
-    if (isCorrect) {
-      const newUnlocked = [...unlocked];
-      newUnlocked[idx] = true;
-      setUnlocked(newUnlocked);
-      setScore(s => s + (wasAttemptedBefore ? 50 : 100));
-      setFeedback({
-        correct: true,
-        message: randomFrom(game.correctMessages)
-      });
-      if (newUnlocked.every(Boolean)) {
-        setTimeout(() => {
-          setShowWin(true);
-          setShowConfettiBurst(true);
-          setTimeout(() => setShowConfettiBurst(false), 3500);
-        }, 700);
-      }
-    } else {
-      const newAttempted = [...attempted];
-      newAttempted[idx] = true;
-      setAttempted(newAttempted);
-      setFeedback({
-        correct: false,
-        message: randomFrom(game.wrongMessages)
-      });
-    }
-  };
-  const resetGame = () => {
-    setUnlocked(Array(TOTAL).fill(false));
-    setAttempted(Array(TOTAL).fill(false));
-    setScore(0);
-    setShowWin(false);
-    setActiveId(null);
-    setShowResetConfirm(false);
-    setShowFullImage(false);
-  };
-  const handleImageFile = file => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => setGame(g => ({
-      ...g,
-      mainImage: e.target.result
-    }));
-    reader.readAsDataURL(file);
-  };
-  const tileBgStyle = index => {
-    const col = index % COLS,
-      row = Math.floor(index / COLS);
-    return {
-      backgroundImage: `url(${game.mainImage})`,
-      backgroundSize: `${COLS * 100}% ${ROWS * 100}%`,
-      backgroundPosition: `${col / (COLS - 1) * 100}% ${row / (ROWS - 1) * 100}%`
-    };
-  };
-  const NavBar = () => /*#__PURE__*/React.createElement("div", {
+
+/* ================================================================== */
+/*  TOP-LEVEL PAGE / MODAL COMPONENTS                                  */
+/*  (kept outside App so React never remounts them on every keystroke) */
+/* ================================================================== */
+
+function NavBar({
+  page,
+  setPage,
+  companyName
+}) {
+  return /*#__PURE__*/React.createElement("div", {
     className: "sticky top-0 z-40 border-b border-slate-800 bg-slate-950/90 backdrop-blur"
   }, /*#__PURE__*/React.createElement("div", {
     className: "mx-auto flex max-w-6xl items-center justify-between px-4 py-3"
@@ -354,7 +263,7 @@ function App() {
     className: "flex h-8 w-8 items-center justify-center rounded bg-orange-500/20 text-orange-400"
   }, I("puzzle", 18)), /*#__PURE__*/React.createElement("span", {
     className: "font-black tracking-tight text-slate-100"
-  }, game.companyName || "World Steel")), /*#__PURE__*/React.createElement("div", {
+  }, companyName || "World Steel")), /*#__PURE__*/React.createElement("div", {
     className: "flex gap-1 rounded-lg bg-slate-900 p-1"
   }, [{
     id: "play",
@@ -375,7 +284,27 @@ function App() {
   }, I(t.icon, 14), /*#__PURE__*/React.createElement("span", {
     className: "hidden sm:inline"
   }, t.label))))));
-  const PlayPage = () => /*#__PURE__*/React.createElement("div", {
+}
+function PlayPage({
+  game,
+  unlocked,
+  score,
+  unlockedCount,
+  progressPct,
+  activeId,
+  imgSize,
+  openPuzzle
+}) {
+  const tileBgStyle = index => {
+    const col = index % COLS,
+      row = Math.floor(index / COLS);
+    return {
+      backgroundImage: `url(${game.mainImage})`,
+      backgroundSize: `${COLS * 100}% ${ROWS * 100}%`,
+      backgroundPosition: `${col / (COLS - 1) * 100}% ${row / (ROWS - 1) * 100}%`
+    };
+  };
+  return /*#__PURE__*/React.createElement("div", {
     className: "mx-auto max-w-6xl px-4 pb-20 pt-8"
   }, /*#__PURE__*/React.createElement("div", {
     className: "mb-8 text-center"
@@ -411,32 +340,19 @@ function App() {
       width: `${progressPct}%`
     }
   })))), /*#__PURE__*/React.createElement("div", {
-    className: "mb-8 grid grid-cols-5 gap-2 sm:grid-cols-7"
-  }, game.puzzles.map((p, i) => {
-    const isUnlocked = unlocked[i],
-      isActive = activeId === p.id;
-    return /*#__PURE__*/React.createElement("button", {
-      key: p.id,
-      onClick: () => openPuzzle(p.id),
-      disabled: isUnlocked,
-      className: `group relative flex aspect-square flex-col items-center justify-center rounded-lg border text-xs font-bold transition ${isUnlocked ? "border-emerald-600/50 bg-emerald-500/10 text-emerald-400" : isActive ? "ws-glow border-orange-500 bg-orange-500/10 text-orange-300" : "border-slate-700 bg-slate-900 text-slate-400 hover:border-orange-500/60 hover:text-orange-300"}`
-    }, isUnlocked ? I("check", 16) : isActive ? I("sparkles", 16) : I("lock", 14), /*#__PURE__*/React.createElement("span", {
-      className: "mt-1"
-    }, String(p.id).padStart(2, "0")));
-  })), /*#__PURE__*/React.createElement("div", {
     className: "mb-4 flex items-center gap-2"
   }, /*#__PURE__*/React.createElement("div", {
     className: "h-px flex-1 bg-slate-800"
   }), /*#__PURE__*/React.createElement("p", {
     className: "text-[11px] font-bold uppercase tracking-[0.25em] text-slate-500"
-  }, "The Big Picture"), /*#__PURE__*/React.createElement("div", {
+  }, "The Big Picture — Bấm vào ô khóa để giải đố"), /*#__PURE__*/React.createElement("div", {
     className: "h-px flex-1 bg-slate-800"
   })), /*#__PURE__*/React.createElement("div", {
     className: "ws-scrollbar overflow-x-auto rounded-xl border border-slate-800 bg-slate-900 p-1.5"
   }, /*#__PURE__*/React.createElement("div", {
     className: "relative mx-auto grid min-w-[560px]",
     style: {
-      aspectRatio: `${COLS} / ${ROWS}`,
+      aspectRatio: `${imgSize.w} / ${imgSize.h}`,
       gridTemplateColumns: `repeat(${COLS}, 1fr)`,
       gridTemplateRows: `repeat(${ROWS}, 1fr)`
     }
@@ -453,138 +369,140 @@ function App() {
       className: "ws-reveal absolute inset-0"
     }) : /*#__PURE__*/React.createElement("button", {
       onClick: () => openPuzzle(id),
-      className: `absolute inset-0 flex flex-col items-center justify-center gap-1 border border-slate-950/60 bg-slate-950/85 backdrop-blur-[1px] transition hover:bg-slate-950/70 ${activeId === id ? "bg-orange-950/60" : ""}`
-    }, I("lock", 16, "text-slate-500"), /*#__PURE__*/React.createElement("span", {
+      className: `absolute inset-0 flex flex-col items-center justify-center gap-1 border border-black/40 bg-black transition hover:bg-slate-900 ${activeId === id ? "ws-glow !bg-orange-950" : ""}`
+    }, activeId === id ? I("sparkles", 18, "text-orange-400") : I("lock", 16, "text-slate-500"), /*#__PURE__*/React.createElement("span", {
       className: "text-[11px] font-bold text-slate-400"
     }, String(id).padStart(2, "0"))));
   }))), /*#__PURE__*/React.createElement("p", {
     className: "mt-3 text-center text-[11px] text-slate-600"
   }, "Kéo ngang để xem trên màn hình nhỏ — đây là một bức hình duy nhất được chia thành ", TOTAL, " vùng."));
-  const activePuzzle = game.puzzles.find(p => p.id === activeId);
-  const PuzzleModal = () => {
-    if (!activePuzzle) return null;
-    return /*#__PURE__*/React.createElement("div", {
-      className: "fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: `ws-pop w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl ${feedback && !feedback.correct ? "ws-shake" : ""}`
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "flex items-center justify-between border-b border-slate-800 px-5 py-4"
-    }, /*#__PURE__*/React.createElement("p", {
-      className: "text-xs font-bold uppercase tracking-widest text-orange-400"
-    }, "Puzzle #", String(activePuzzle.id).padStart(2, "0")), /*#__PURE__*/React.createElement("button", {
-      onClick: closeModal,
-      className: "text-slate-500 hover:text-slate-200"
-    }, I("x", 18))), !feedback ? /*#__PURE__*/React.createElement("div", {
-      className: "px-5 py-5"
-    }, /*#__PURE__*/React.createElement("p", {
-      className: "mb-5 text-base font-semibold leading-snug text-slate-100"
-    }, activePuzzle.question), activePuzzle.type === "text" ? /*#__PURE__*/React.createElement("input", {
-      autoFocus: true,
-      value: textInput,
-      onChange: e => setTextInput(e.target.value),
-      placeholder: "Nhập câu trả lời...",
-      className: "w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-orange-500"
-    }) : /*#__PURE__*/React.createElement("div", {
-      className: "space-y-2"
-    }, activePuzzle.options.map((opt, i) => /*#__PURE__*/React.createElement("button", {
-      key: i,
-      onClick: () => setSelectedOption(opt),
-      className: `flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition ${selectedOption === opt ? "border-orange-500 bg-orange-500/10 text-orange-200" : "border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-500"}`
-    }, /*#__PURE__*/React.createElement("span", {
-      className: `flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${selectedOption === opt ? "border-orange-400" : "border-slate-600"}`
-    }, selectedOption === opt && /*#__PURE__*/React.createElement("span", {
-      className: "h-2 w-2 rounded-full bg-orange-400"
-    })), opt))), /*#__PURE__*/React.createElement("button", {
-      onClick: submitAnswer,
-      disabled: activePuzzle.type === "text" ? !textInput.trim() : !selectedOption,
-      className: "mt-5 w-full rounded-lg bg-orange-500 py-2.5 text-sm font-bold uppercase tracking-wide text-slate-950 transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-30"
-    }, "Trả Lời")) : /*#__PURE__*/React.createElement("div", {
-      className: "px-5 py-6 text-center"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "mb-3 flex justify-center"
-    }, feedback.correct ? /*#__PURE__*/React.createElement("div", {
-      className: "flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400"
-    }, I("check", 28)) : /*#__PURE__*/React.createElement("div", {
-      className: "flex h-14 w-14 items-center justify-center rounded-full bg-rose-500/15 text-rose-400"
-    }, I("x", 28))), /*#__PURE__*/React.createElement("p", {
-      className: `mb-2 text-lg font-black ${feedback.correct ? "text-emerald-400" : "text-rose-400"}`
-    }, feedback.correct ? "🎉 CHÍNH XÁC!" : "😂 Ôi..."), /*#__PURE__*/React.createElement("p", {
-      className: "mb-4 text-sm italic text-slate-300"
-    }, "“", feedback.message, "”"), /*#__PURE__*/React.createElement("p", {
-      className: "mb-5 text-xs font-semibold uppercase tracking-wide text-slate-500"
-    }, feedback.correct ? `🔓 Đã mở khóa ô #${String(activePuzzle.id).padStart(2, "0")}!` : `🔒 Ô #${String(activePuzzle.id).padStart(2, "0")} vẫn đang khóa!`), /*#__PURE__*/React.createElement("button", {
-      onClick: () => {
-        if (feedback.correct) {
-          closeModal();
-        } else {
-          setFeedback(null);
-          setSelectedOption(null);
-          setTextInput("");
-        }
-      },
-      className: "w-full rounded-lg bg-slate-100 py-2.5 text-sm font-bold uppercase tracking-wide text-slate-950 hover:bg-white"
-    }, feedback.correct ? "Tiếp Tục" : "Thử Lại"))));
-  };
-  const WinModal = () => {
-    if (!showWin) return null;
-    return /*#__PURE__*/React.createElement("div", {
-      className: "fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/90 p-4"
-    }, showConfettiBurst && /*#__PURE__*/React.createElement(Confetti, null), /*#__PURE__*/React.createElement("div", {
-      className: "ws-pop relative w-full max-w-lg rounded-2xl border border-orange-500/40 bg-slate-900 p-8 text-center shadow-2xl"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "mx-auto mb-3 text-amber-400"
-    }, I("trophy", 48)), /*#__PURE__*/React.createElement("p", {
-      className: "mb-1 text-2xl font-black text-orange-400"
-    }, game.winTitle), /*#__PURE__*/React.createElement("p", {
-      className: "mb-1 text-lg font-black uppercase tracking-wide text-slate-100"
-    }, "You Unlocked The Big Picture"), /*#__PURE__*/React.createElement("p", {
-      className: "mb-4 text-sm text-slate-400"
-    }, game.winMessage), /*#__PURE__*/React.createElement("p", {
-      className: "mb-6 text-xs font-bold uppercase tracking-widest text-slate-500"
-    }, "🏆 ", TOTAL, "/", TOTAL, " — Master Puzzle Solver — Score ", score), /*#__PURE__*/React.createElement("div", {
-      className: "flex flex-col gap-2 sm:flex-row"
-    }, /*#__PURE__*/React.createElement("button", {
-      onClick: () => {
-        setShowWin(false);
-        setShowFullImage(true);
-      },
-      className: "flex-1 rounded-lg bg-orange-500 py-2.5 text-sm font-bold uppercase tracking-wide text-slate-950 hover:bg-orange-400"
-    }, game.winButton), /*#__PURE__*/React.createElement("button", {
-      onClick: resetGame,
-      className: "flex-1 rounded-lg border border-slate-700 py-2.5 text-sm font-bold uppercase tracking-wide text-slate-300 hover:border-slate-500"
-    }, "Chơi Lại"))));
-  };
-  const FullImageModal = () => {
-    if (!showFullImage) return null;
-    return /*#__PURE__*/React.createElement("div", {
-      className: "fixed inset-0 z-[65] flex items-center justify-center bg-slate-950/95 p-4",
-      onClick: () => setShowFullImage(false)
-    }, /*#__PURE__*/React.createElement("button", {
-      className: "absolute right-5 top-5 text-slate-400 hover:text-white",
-      onClick: () => setShowFullImage(false)
-    }, I("x", 24)), /*#__PURE__*/React.createElement("img", {
-      src: game.mainImage,
-      alt: "Full company picture",
-      className: "ws-reveal max-h-[85vh] w-full max-w-5xl rounded-xl object-contain",
-      onClick: e => e.stopPropagation()
-    }));
-  };
-  const updatePuzzle = (id, patch) => setGame(g => ({
-    ...g,
-    puzzles: g.puzzles.map(p => p.id === id ? {
-      ...p,
-      ...patch
-    } : p)
+}
+function PuzzleModal({
+  activePuzzle,
+  feedback,
+  selectedOption,
+  setSelectedOption,
+  textInput,
+  setTextInput,
+  submitAnswer,
+  closeModal,
+  retryAnswer
+}) {
+  if (!activePuzzle) return null;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `ws-pop w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl ${feedback && !feedback.correct ? "ws-shake" : ""}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between border-b border-slate-800 px-5 py-4"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-xs font-bold uppercase tracking-widest text-orange-400"
+  }, "Puzzle #", String(activePuzzle.id).padStart(2, "0")), /*#__PURE__*/React.createElement("button", {
+    onClick: closeModal,
+    className: "text-slate-500 hover:text-slate-200"
+  }, I("x", 18))), !feedback ? /*#__PURE__*/React.createElement("div", {
+    className: "px-5 py-5"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "mb-5 text-base font-semibold leading-snug text-slate-100"
+  }, activePuzzle.question), activePuzzle.type === "text" ? /*#__PURE__*/React.createElement("input", {
+    autoFocus: true,
+    value: textInput,
+    onChange: e => setTextInput(e.target.value),
+    placeholder: "Nhập câu trả lời...",
+    className: "w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-orange-500"
+  }) : /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2"
+  }, activePuzzle.options.map((opt, i) => /*#__PURE__*/React.createElement("button", {
+    key: i,
+    onClick: () => setSelectedOption(opt),
+    className: `flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition ${selectedOption === opt ? "border-orange-500 bg-orange-500/10 text-orange-200" : "border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-500"}`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: `flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${selectedOption === opt ? "border-orange-400" : "border-slate-600"}`
+  }, selectedOption === opt && /*#__PURE__*/React.createElement("span", {
+    className: "h-2 w-2 rounded-full bg-orange-400"
+  })), opt))), /*#__PURE__*/React.createElement("button", {
+    onClick: submitAnswer,
+    disabled: activePuzzle.type === "text" ? !textInput.trim() : !selectedOption,
+    className: "mt-5 w-full rounded-lg bg-orange-500 py-2.5 text-sm font-bold uppercase tracking-wide text-slate-950 transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-30"
+  }, "Trả Lời")) : /*#__PURE__*/React.createElement("div", {
+    className: "px-5 py-6 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mb-3 flex justify-center"
+  }, feedback.correct ? /*#__PURE__*/React.createElement("div", {
+    className: "flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400"
+  }, I("check", 28)) : /*#__PURE__*/React.createElement("div", {
+    className: "flex h-14 w-14 items-center justify-center rounded-full bg-rose-500/15 text-rose-400"
+  }, I("x", 28))), /*#__PURE__*/React.createElement("p", {
+    className: `mb-2 text-lg font-black ${feedback.correct ? "text-emerald-400" : "text-rose-400"}`
+  }, feedback.correct ? "🎉 CHÍNH XÁC!" : "😂 Ôi..."), /*#__PURE__*/React.createElement("p", {
+    className: "mb-4 text-sm italic text-slate-300"
+  }, "“", feedback.message, "”"), /*#__PURE__*/React.createElement("p", {
+    className: "mb-5 text-xs font-semibold uppercase tracking-wide text-slate-500"
+  }, feedback.correct ? `🔓 Đã mở khóa ô #${String(activePuzzle.id).padStart(2, "0")}!` : `🔒 Ô #${String(activePuzzle.id).padStart(2, "0")} vẫn đang khóa!`), /*#__PURE__*/React.createElement("button", {
+    onClick: feedback.correct ? closeModal : retryAnswer,
+    className: "w-full rounded-lg bg-slate-100 py-2.5 text-sm font-bold uppercase tracking-wide text-slate-950 hover:bg-white"
+  }, feedback.correct ? "Tiếp Tục" : "Thử Lại"))));
+}
+function WinModal({
+  showWin,
+  showConfettiBurst,
+  game,
+  score,
+  onViewImage,
+  onPlayAgain
+}) {
+  if (!showWin) return null;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/90 p-4"
+  }, showConfettiBurst && /*#__PURE__*/React.createElement(Confetti, null), /*#__PURE__*/React.createElement("div", {
+    className: "ws-pop relative w-full max-w-lg rounded-2xl border border-orange-500/40 bg-slate-900 p-8 text-center shadow-2xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mx-auto mb-3 text-amber-400"
+  }, I("trophy", 48)), /*#__PURE__*/React.createElement("p", {
+    className: "mb-1 text-2xl font-black text-orange-400"
+  }, game.winTitle), /*#__PURE__*/React.createElement("p", {
+    className: "mb-1 text-lg font-black uppercase tracking-wide text-slate-100"
+  }, "You Unlocked The Big Picture"), /*#__PURE__*/React.createElement("p", {
+    className: "mb-4 text-sm text-slate-400"
+  }, game.winMessage), /*#__PURE__*/React.createElement("p", {
+    className: "mb-6 text-xs font-bold uppercase tracking-widest text-slate-500"
+  }, "🏆 ", TOTAL, "/", TOTAL, " — Master Puzzle Solver — Score ", score), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-2 sm:flex-row"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: onViewImage,
+    className: "flex-1 rounded-lg bg-orange-500 py-2.5 text-sm font-bold uppercase tracking-wide text-slate-950 hover:bg-orange-400"
+  }, game.winButton), /*#__PURE__*/React.createElement("button", {
+    onClick: onPlayAgain,
+    className: "flex-1 rounded-lg border border-slate-700 py-2.5 text-sm font-bold uppercase tracking-wide text-slate-300 hover:border-slate-500"
+  }, "Chơi Lại"))));
+}
+function FullImageModal({
+  showFullImage,
+  mainImage,
+  onClose
+}) {
+  if (!showFullImage) return null;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "fixed inset-0 z-[65] flex items-center justify-center bg-slate-950/95 p-4",
+    onClick: onClose
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "absolute right-5 top-5 text-slate-400 hover:text-white",
+    onClick: onClose
+  }, I("x", 24)), /*#__PURE__*/React.createElement("img", {
+    src: mainImage,
+    alt: "Full company picture",
+    className: "ws-reveal max-h-[85vh] w-full max-w-5xl rounded-xl object-contain",
+    onClick: e => e.stopPropagation()
   }));
-  const updateOption = (id, idx, value) => setGame(g => ({
-    ...g,
-    puzzles: g.puzzles.map(p => p.id === id ? {
-      ...p,
-      options: p.options.map((o, i) => i === idx ? value : o)
-    } : p)
-  }));
-  const [openPuzzleEdit, setOpenPuzzleEdit] = useState(1);
-  const SetupPage = () => /*#__PURE__*/React.createElement("div", {
+}
+function SetupPage({
+  puzzles,
+  updatePuzzle,
+  updateOption,
+  openPuzzleEdit,
+  setOpenPuzzleEdit
+}) {
+  return /*#__PURE__*/React.createElement("div", {
     className: "mx-auto max-w-4xl px-4 pb-20 pt-8"
   }, /*#__PURE__*/React.createElement("h2", {
     className: "mb-1 text-2xl font-black uppercase tracking-tight text-slate-100"
@@ -592,7 +510,7 @@ function App() {
     className: "mb-6 text-sm text-slate-500"
   }, "Chỉnh sửa ", TOTAL, " câu đố. Chỉ Admin (bạn) mới thấy đáp án đúng ở đây."), /*#__PURE__*/React.createElement("div", {
     className: "space-y-3"
-  }, game.puzzles.map(p => {
+  }, puzzles.map(p => {
     const isOpen = openPuzzleEdit === p.id;
     return /*#__PURE__*/React.createElement("div", {
       key: p.id,
@@ -671,23 +589,16 @@ function App() {
       value: opt
     }, opt))))));
   })));
-  const addMessage = field => setGame(g => ({
-    ...g,
-    [field]: [...g[field], ""]
-  }));
-  const updateMessage = (field, idx, value) => setGame(g => ({
-    ...g,
-    [field]: g[field].map((m, i) => i === idx ? value : m)
-  }));
-  const removeMessage = (field, idx) => setGame(g => ({
-    ...g,
-    [field]: g[field].filter((_, i) => i !== idx)
-  }));
-  const MessageList = ({
-    title,
-    field,
-    hint
-  }) => /*#__PURE__*/React.createElement("div", {
+}
+function MessageList({
+  title,
+  hint,
+  messages,
+  onAdd,
+  onUpdate,
+  onRemove
+}) {
+  return /*#__PURE__*/React.createElement("div", {
     className: "rounded-xl border border-slate-800 bg-slate-900/60 p-4"
   }, /*#__PURE__*/React.createElement("div", {
     className: "mb-3 flex items-center justify-between"
@@ -696,30 +607,46 @@ function App() {
   }, title), /*#__PURE__*/React.createElement("p", {
     className: "text-[11px] text-slate-500"
   }, hint)), /*#__PURE__*/React.createElement("button", {
-    onClick: () => addMessage(field),
+    onClick: onAdd,
     className: "flex items-center gap-1 rounded-lg border border-slate-700 px-2.5 py-1.5 text-[11px] font-bold uppercase text-slate-300 hover:border-orange-500 hover:text-orange-300"
   }, I("plus", 12), " Add")), /*#__PURE__*/React.createElement("div", {
     className: "space-y-2"
-  }, game[field].map((msg, i) => /*#__PURE__*/React.createElement("div", {
+  }, messages.map((msg, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     className: "flex items-center gap-2"
   }, /*#__PURE__*/React.createElement("span", {
     className: "w-5 shrink-0 text-right text-[11px] text-slate-600"
   }, i + 1, "."), /*#__PURE__*/React.createElement("input", {
     value: msg,
-    onChange: e => updateMessage(field, i, e.target.value),
+    onChange: e => onUpdate(i, e.target.value),
     className: "w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 outline-none focus:border-orange-500"
   }), /*#__PURE__*/React.createElement("button", {
-    onClick: () => removeMessage(field, i),
+    onClick: () => onRemove(i),
     className: "shrink-0 text-slate-600 hover:text-rose-400"
   }, I("trash", 15))))));
-  const SettingsPage = () => /*#__PURE__*/React.createElement("div", {
+}
+function SettingsPage({
+  game,
+  setGame,
+  fileInputRef,
+  dragOver,
+  setDragOver,
+  handleImageFile,
+  onPreview,
+  onAskReset,
+  onUnlockNext,
+  onResetGame,
+  addMessage,
+  updateMessage,
+  removeMessage
+}) {
+  return /*#__PURE__*/React.createElement("div", {
     className: "mx-auto max-w-3xl px-4 pb-20 pt-8"
   }, /*#__PURE__*/React.createElement("h2", {
     className: "mb-1 text-2xl font-black uppercase tracking-tight text-slate-100"
   }, "Game Settings"), /*#__PURE__*/React.createElement("p", {
     className: "mb-6 text-sm text-slate-500"
-  }, "Dữ liệu được lưu tự động vào trình duyệt (localStorage) — tải lại trang sẽ không mất tiến trình."), /*#__PURE__*/React.createElement("div", {
+  }, "Dữ liệu được lưu tự động vào trình duyệt (localStorage) của thiết bị này — tải lại trang sẽ không mất tiến trình. Mỗi trình duyệt/thiết bị lưu tiến trình riêng."), /*#__PURE__*/React.createElement("div", {
     className: "space-y-6"
   }, /*#__PURE__*/React.createElement("div", {
     className: "rounded-xl border border-slate-800 bg-slate-900/60 p-4"
@@ -775,7 +702,7 @@ function App() {
     className: "text-sm font-semibold text-slate-300"
   }, "Drag & drop image"), /*#__PURE__*/React.createElement("p", {
     className: "text-[11px] text-slate-600"
-  }, "JPG · PNG · WEBP"), /*#__PURE__*/React.createElement("input", {
+  }, "JPG · PNG · WEBP — mọi tỉ lệ ảnh đều hiển thị đúng, không bị méo"), /*#__PURE__*/React.createElement("input", {
     ref: fileInputRef,
     type: "file",
     accept: "image/jpeg,image/png,image/webp,image/jpg",
@@ -821,12 +748,18 @@ function App() {
     className: "mt-3 text-[11px] text-slate-600"
   }, "Cố định 7 × 2 = 14 để khớp với 14 puzzle.")), /*#__PURE__*/React.createElement(MessageList, {
     title: "Correct Answer Messages",
-    field: "correctMessages",
-    hint: "Random 1 câu khi trả lời đúng"
+    hint: "Random 1 câu khi trả lời đúng",
+    messages: game.correctMessages,
+    onAdd: () => addMessage("correctMessages"),
+    onUpdate: (i, v) => updateMessage("correctMessages", i, v),
+    onRemove: i => removeMessage("correctMessages", i)
   }), /*#__PURE__*/React.createElement(MessageList, {
     title: "Wrong Answer Messages",
-    field: "wrongMessages",
-    hint: "Random 1 câu khi trả lời sai"
+    hint: "Random 1 câu khi trả lời sai",
+    messages: game.wrongMessages,
+    onAdd: () => addMessage("wrongMessages"),
+    onUpdate: (i, v) => updateMessage("wrongMessages", i, v),
+    onRemove: i => removeMessage("wrongMessages", i)
   }), /*#__PURE__*/React.createElement("div", {
     className: "rounded-xl border border-slate-800 bg-slate-900/60 p-4"
   }, /*#__PURE__*/React.createElement("h3", {
@@ -863,10 +796,10 @@ function App() {
   })))), /*#__PURE__*/React.createElement("div", {
     className: "flex flex-col gap-3 sm:flex-row"
   }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => setPage("play"),
+    onClick: onPreview,
     className: "flex flex-1 items-center justify-center gap-2 rounded-lg bg-orange-500 py-2.5 text-sm font-bold uppercase tracking-wide text-slate-950 hover:bg-orange-400"
   }, I("eye", 15), " Preview Game"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setShowResetConfirm(true),
+    onClick: onAskReset,
     className: "flex flex-1 items-center justify-center gap-2 rounded-lg border border-rose-700/50 py-2.5 text-sm font-bold uppercase tracking-wide text-rose-400 hover:bg-rose-950/30"
   }, I("reset", 15), " Reset Game")), /*#__PURE__*/React.createElement("div", {
     className: "rounded-xl border border-slate-800 bg-slate-900/60 p-4"
@@ -875,45 +808,258 @@ function App() {
   }, I("shuffle", 14), " Demo Mode"), /*#__PURE__*/React.createElement("div", {
     className: "flex flex-wrap gap-2"
   }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      const idx = unlocked.findIndex(u => !u);
-      if (idx === -1) return;
-      const nu = [...unlocked];
-      nu[idx] = true;
-      setUnlocked(nu);
-      setScore(s => s + 100);
-      if (nu.every(Boolean)) {
-        setShowWin(true);
-        setShowConfettiBurst(true);
-        setTimeout(() => setShowConfettiBurst(false), 3500);
-      }
-    },
+    onClick: onUnlockNext,
     className: "rounded-lg border border-slate-700 px-3 py-1.5 text-[11px] font-bold uppercase text-slate-300 hover:border-orange-500 hover:text-orange-300"
   }, "Unlock Next Tile"), /*#__PURE__*/React.createElement("button", {
-    onClick: resetGame,
+    onClick: onResetGame,
     className: "rounded-lg border border-slate-700 px-3 py-1.5 text-[11px] font-bold uppercase text-slate-300 hover:border-orange-500 hover:text-orange-300"
   }, "Reset Game")))));
-  const ResetConfirm = () => {
-    if (!showResetConfirm) return null;
-    return /*#__PURE__*/React.createElement("div", {
-      className: "fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "ws-pop w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 text-center"
-    }, /*#__PURE__*/React.createElement("p", {
-      className: "mb-4 text-sm font-semibold text-slate-200"
-    }, "Bạn có chắc muốn reset toàn bộ tiến trình?"), /*#__PURE__*/React.createElement("div", {
-      className: "flex gap-2"
-    }, /*#__PURE__*/React.createElement("button", {
-      onClick: () => setShowResetConfirm(false),
-      className: "flex-1 rounded-lg border border-slate-700 py-2 text-xs font-bold uppercase text-slate-300"
-    }, "Cancel"), /*#__PURE__*/React.createElement("button", {
-      onClick: resetGame,
-      className: "flex-1 rounded-lg bg-rose-600 py-2 text-xs font-bold uppercase text-white hover:bg-rose-500"
-    }, "Reset"))));
+}
+function ResetConfirm({
+  show,
+  onCancel,
+  onConfirm
+}) {
+  if (!show) return null;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "ws-pop w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 text-center"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "mb-4 text-sm font-semibold text-slate-200"
+  }, "Bạn có chắc muốn reset toàn bộ tiến trình?"), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: onCancel,
+    className: "flex-1 rounded-lg border border-slate-700 py-2 text-xs font-bold uppercase text-slate-300"
+  }, "Cancel"), /*#__PURE__*/React.createElement("button", {
+    onClick: onConfirm,
+    className: "flex-1 rounded-lg bg-rose-600 py-2 text-xs font-bold uppercase text-white hover:bg-rose-500"
+  }, "Reset"))));
+}
+
+/* ================================================================== */
+/*  APP (state + orchestration only — no JSX-heavy inline components)  */
+/* ================================================================== */
+
+function App() {
+  const saved = loadState();
+  const [page, setPage] = useState("play");
+  const [game, setGame] = useState(saved?.game || DEFAULT_GAME);
+  const [unlocked, setUnlocked] = useState(saved?.unlocked || Array(TOTAL).fill(false));
+  const [attempted, setAttempted] = useState(saved?.attempted || Array(TOTAL).fill(false));
+  const [score, setScore] = useState(saved?.score || 0);
+  const [activeId, setActiveId] = useState(null);
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [textInput, setTextInput] = useState("");
+  const [feedback, setFeedback] = useState(null);
+  const [showWin, setShowWin] = useState(false);
+  const [showConfettiBurst, setShowConfettiBurst] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showFullImage, setShowFullImage] = useState(false);
+  const [openPuzzleEdit, setOpenPuzzleEdit] = useState(1);
+  const fileInputRef = useRef(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [imgSize, setImgSize] = useState({
+    w: 1400,
+    h: 400
+  });
+  useEffect(() => {
+    saveState({
+      game,
+      unlocked,
+      attempted,
+      score
+    });
+  }, [game, unlocked, attempted, score]);
+
+  // Measure the real image so the grid never stretches/distorts it.
+  useEffect(() => {
+    if (!game.mainImage) return;
+    const img = new Image();
+    img.onload = () => setImgSize({
+      w: img.naturalWidth || 1400,
+      h: img.naturalHeight || 400
+    });
+    img.src = game.mainImage;
+  }, [game.mainImage]);
+  const unlockedCount = unlocked.filter(Boolean).length;
+  const progressPct = Math.round(unlockedCount / TOTAL * 100);
+  const activePuzzle = game.puzzles.find(p => p.id === activeId);
+  const openPuzzle = id => {
+    if (unlocked[id - 1]) return;
+    setActiveId(id);
+    setSelectedOption(null);
+    setTextInput("");
+    setFeedback(null);
+  };
+  const closeModal = () => {
+    setActiveId(null);
+    setSelectedOption(null);
+    setTextInput("");
+    setFeedback(null);
+  };
+  const retryAnswer = () => {
+    setFeedback(null);
+    setSelectedOption(null);
+    setTextInput("");
+  };
+  const randomFrom = arr => arr[Math.floor(Math.random() * arr.length)] || "";
+  const submitAnswer = () => {
+    const puzzle = game.puzzles.find(p => p.id === activeId);
+    if (!puzzle) return;
+    let userAnswer = puzzle.type === "text" ? textInput.trim() : selectedOption;
+    if (!userAnswer) return;
+    const isCorrect = puzzle.type === "text" ? userAnswer.toLowerCase() === String(puzzle.correctAnswer).toLowerCase() : userAnswer === puzzle.correctAnswer;
+    const idx = puzzle.id - 1;
+    const wasAttemptedBefore = attempted[idx];
+    if (isCorrect) {
+      const newUnlocked = [...unlocked];
+      newUnlocked[idx] = true;
+      setUnlocked(newUnlocked);
+      setScore(s => s + (wasAttemptedBefore ? 50 : 100));
+      setFeedback({
+        correct: true,
+        message: randomFrom(game.correctMessages)
+      });
+      if (newUnlocked.every(Boolean)) {
+        setTimeout(() => {
+          setShowWin(true);
+          setShowConfettiBurst(true);
+          setTimeout(() => setShowConfettiBurst(false), 3500);
+        }, 700);
+      }
+    } else {
+      const newAttempted = [...attempted];
+      newAttempted[idx] = true;
+      setAttempted(newAttempted);
+      setFeedback({
+        correct: false,
+        message: randomFrom(game.wrongMessages)
+      });
+    }
+  };
+  const resetGame = () => {
+    setUnlocked(Array(TOTAL).fill(false));
+    setAttempted(Array(TOTAL).fill(false));
+    setScore(0);
+    setShowWin(false);
+    setActiveId(null);
+    setShowResetConfirm(false);
+    setShowFullImage(false);
+  };
+  const handleImageFile = file => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => setGame(g => ({
+      ...g,
+      mainImage: e.target.result
+    }));
+    reader.readAsDataURL(file);
+  };
+  const updatePuzzle = (id, patch) => setGame(g => ({
+    ...g,
+    puzzles: g.puzzles.map(p => p.id === id ? {
+      ...p,
+      ...patch
+    } : p)
+  }));
+  const updateOption = (id, idx, value) => setGame(g => ({
+    ...g,
+    puzzles: g.puzzles.map(p => p.id === id ? {
+      ...p,
+      options: p.options.map((o, i) => i === idx ? value : o)
+    } : p)
+  }));
+  const addMessage = field => setGame(g => ({
+    ...g,
+    [field]: [...g[field], ""]
+  }));
+  const updateMessage = (field, idx, value) => setGame(g => ({
+    ...g,
+    [field]: g[field].map((m, i) => i === idx ? value : m)
+  }));
+  const removeMessage = (field, idx) => setGame(g => ({
+    ...g,
+    [field]: g[field].filter((_, i) => i !== idx)
+  }));
+  const handleUnlockNext = () => {
+    const idx = unlocked.findIndex(u => !u);
+    if (idx === -1) return;
+    const nu = [...unlocked];
+    nu[idx] = true;
+    setUnlocked(nu);
+    setScore(s => s + 100);
+    if (nu.every(Boolean)) {
+      setShowWin(true);
+      setShowConfettiBurst(true);
+      setTimeout(() => setShowConfettiBurst(false), 3500);
+    }
   };
   return /*#__PURE__*/React.createElement("div", {
     className: "min-h-screen bg-slate-950 text-slate-100"
-  }, /*#__PURE__*/React.createElement(NavBar, null), page === "play" && /*#__PURE__*/React.createElement(PlayPage, null), page === "setup" && /*#__PURE__*/React.createElement(SetupPage, null), page === "settings" && /*#__PURE__*/React.createElement(SettingsPage, null), /*#__PURE__*/React.createElement(PuzzleModal, null), /*#__PURE__*/React.createElement(WinModal, null), /*#__PURE__*/React.createElement(FullImageModal, null), /*#__PURE__*/React.createElement(ResetConfirm, null));
+  }, /*#__PURE__*/React.createElement(NavBar, {
+    page: page,
+    setPage: setPage,
+    companyName: game.companyName
+  }), page === "play" && /*#__PURE__*/React.createElement(PlayPage, {
+    game: game,
+    unlocked: unlocked,
+    score: score,
+    unlockedCount: unlockedCount,
+    progressPct: progressPct,
+    activeId: activeId,
+    imgSize: imgSize,
+    openPuzzle: openPuzzle
+  }), page === "setup" && /*#__PURE__*/React.createElement(SetupPage, {
+    puzzles: game.puzzles,
+    updatePuzzle: updatePuzzle,
+    updateOption: updateOption,
+    openPuzzleEdit: openPuzzleEdit,
+    setOpenPuzzleEdit: setOpenPuzzleEdit
+  }), page === "settings" && /*#__PURE__*/React.createElement(SettingsPage, {
+    game: game,
+    setGame: setGame,
+    fileInputRef: fileInputRef,
+    dragOver: dragOver,
+    setDragOver: setDragOver,
+    handleImageFile: handleImageFile,
+    onPreview: () => setPage("play"),
+    onAskReset: () => setShowResetConfirm(true),
+    onUnlockNext: handleUnlockNext,
+    onResetGame: resetGame,
+    addMessage: addMessage,
+    updateMessage: updateMessage,
+    removeMessage: removeMessage
+  }), /*#__PURE__*/React.createElement(PuzzleModal, {
+    activePuzzle: activePuzzle,
+    feedback: feedback,
+    selectedOption: selectedOption,
+    setSelectedOption: setSelectedOption,
+    textInput: textInput,
+    setTextInput: setTextInput,
+    submitAnswer: submitAnswer,
+    closeModal: closeModal,
+    retryAnswer: retryAnswer
+  }), /*#__PURE__*/React.createElement(WinModal, {
+    showWin: showWin,
+    showConfettiBurst: showConfettiBurst,
+    game: game,
+    score: score,
+    onViewImage: () => {
+      setShowWin(false);
+      setShowFullImage(true);
+    },
+    onPlayAgain: resetGame
+  }), /*#__PURE__*/React.createElement(FullImageModal, {
+    showFullImage: showFullImage,
+    mainImage: game.mainImage,
+    onClose: () => setShowFullImage(false)
+  }), /*#__PURE__*/React.createElement(ResetConfirm, {
+    show: showResetConfirm,
+    onCancel: () => setShowResetConfirm(false),
+    onConfirm: resetGame
+  }));
 }
 ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
 </script>
