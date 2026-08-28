@@ -107,8 +107,8 @@ function makeDefaultImage() {
   </svg>`;
   return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
 }
-const DEFAULT_CORRECT_MESSAGES = ["Quá dữ! Bộ não này được bảo trì ở đâu vậy?", "Chính xác! HR cần tuyển bạn ngay lập tức.", "Đúng rồi! Sherlock Holmes cũng phải xin vía.", "Não hoạt động 200% công suất!", "Chuẩn không cần chỉnh!", "Đỉnh! Cái này không phải may mắn đâu nhé.", "Một bước gần hơn đến kho báu!"];
-const DEFAULT_WRONG_MESSAGES = ["Ủa? Tự tin dữ vậy?", "Đáp án rất hay... nhưng không đúng.", "Não đang loading, vui lòng thử lại.", "Gần rồi... nhưng vẫn chưa đủ gần.", "Câu trả lời này đã được gửi vào bộ phận... sai.", "Không sao, Einstein cũng từng có ngày nghỉ.", "Hãy bình tĩnh. Công ty vẫn còn nhiều ô lắm."];
+const DEFAULT_CORRECT_MESSAGES = ["Đúng rồi đó, khỏi cảm ơn 😌", "Không phải tôi giỏi, chỉ là vũ trụ đứng về phía tôi.", "Đúng rồi! Sherlock Holmes cũng phải xin vía.", "Não hoạt động 200% công suất!", "Chuẩn không cần chỉnh!", "Đỉnh! Cái này không phải may mắn đâu nhé.", "Tỷ lệ đoán đúng: 1/1. Không thể cản."];
+const DEFAULT_WRONG_MESSAGES = ["Ủa? Tự tin dữ vậy?", "Đáp án rất hay... nhưng không đúng.", "Tôi đoán sai chứ không phải tôi không biết.", "Sai có chiến lược nha, để đối phương mất cảnh giác.", "Câu trả lời này đã được gửi vào bộ phận... sai.", "Đáp án này đúng… ở một vũ trụ khác.", "Hãy bình tĩnh. Công ty vẫn còn nhiều ô lắm."];
 function defaultPuzzles() {
   const p = [{
     question: "🏗️ World Steel được thành lập vào năm nào?",
@@ -143,7 +143,7 @@ function defaultPuzzles() {
   }, {
     question: "CÂU NÓI ĐÁNG SỢ NHẤT TRONG CÔNG TY LÀ ?",
     type: "mc",
-    options: ["Mai họp nhé", "Có một việc nhỏ thôi", "Anh/chị cần em hỗ trợ một chút", "Em rảnh không?"],
+    options: ["Mai họp nhé", "Có một việc nhỏ thôi", "Em rảnh không?", "Anh/chị cần em hỗ trợ một chút"],
     correctAnswer: "Em rảnh không?"
   }, {
     question: "Khi Sếp hỏi “Mọi người có ý kiến gì không?”, phản ứng phổ biến nhất là:",
@@ -163,7 +163,7 @@ function defaultPuzzles() {
   }, {
     question: "Tại World Steel, nếu một ngày không có email, không họp, không deadline, đó là :",
     type: "mc",
-    options: ["Ngày Nghỉ", "Ngày Lễ", "Giấc mơ", "Một hiện tượng chưa từng được ghi nhận trong lịch sử văn phòng"],
+    options: ["Ngày Nghỉ", "Một hiện tượng chưa từng được ghi nhận trong lịch sử văn phòng", "Ngày Lễ", "Giấc mơ"],
     correctAnswer: "Một hiện tượng chưa từng được ghi nhận trong lịch sử văn phòng"
   }, {
     question: "Âm thanh nào quen thuộc nhất với những người Nhà máy?",
