@@ -111,40 +111,40 @@ const DEFAULT_CORRECT_MESSAGES = ["Quá dữ! Bộ não này được bảo trì
 const DEFAULT_WRONG_MESSAGES = ["Ủa? Tự tin dữ vậy?", "Đáp án rất hay... nhưng không đúng.", "Não đang loading, vui lòng thử lại.", "Gần rồi... nhưng vẫn chưa đủ gần.", "Câu trả lời này đã được gửi vào bộ phận... sai.", "Không sao, Einstein cũng từng có ngày nghỉ.", "Hãy bình tĩnh. Công ty vẫn còn nhiều ô lắm."];
 function defaultPuzzles() {
   const p = [{
-    question: "World Steel chuyên về lĩnh vực gì?",
+    question: "🏗️ World Steel được thành lập vào năm nào?",
     type: "mc",
-    options: ["Gia công kết cấu thép", "Kinh doanh bất động sản", "Sản xuất bánh kẹo", "Trồng trọt nông nghiệp"],
-    correctAnswer: "Gia công kết cấu thép"
+    options: ["2012", "2010", "2009", "2016"],
+    correctAnswer: "2012"
   }, {
-    question: '"Thép kết cấu" trong tiếng Anh là gì?',
+    question: "🎂 Năm 2026, World Steel kỷ niệm bao nhiêu năm thành lập?",
     type: "mc",
-    options: ["Structural Steel", "Sweet Metal", "Steel Sweet", "Structure Only"],
-    correctAnswer: "Structural Steel"
+    options: ["14 năm", "8 năm", "20 năm", "12 năm"],
+    correctAnswer: "14 năm"
   }, {
-    question: "PEB là viết tắt của gì?",
+    question: "🏭 Nhà máy World Steel có diện tích khoảng bao nhiêu m²?",
     type: "mc",
-    options: ["Pre-Engineered Building", "Personal Energy Board", "Public Electric Base", "Pre-Excavated Basement"],
-    correctAnswer: "Pre-Engineered Building"
+    options: ["20.000 m²", "25.000 m²", "24.000 m²", "35.000 m²"],
+    correctAnswer: "20.000 m²"
   }, {
-    question: "Đâu là một tiêu chuẩn gia công kết cấu thép quốc tế mà công ty áp dụng?",
+    question: "Khi bạn gửi email cho công ty bạn đang làm, bạn viết To “WORLD…” – bạn viết thiếu chữ gì?",
     type: "mc",
-    options: ["AS/NZS 5131", "ISO 9001-Bakery", "HACCP", "IATF Food Safety"],
-    correctAnswer: "AS/NZS 5131"
+    options: ["CUP 🏆", "STEEL 🔩", "steel 🔩", "STAR ⭐"],
+    correctAnswer: "STEEL 🔩"
   }, {
-    question: "BIM được sử dụng để làm gì?",
+    question: "Vào mỗi buổi sáng đến công ty, câu nào khiến các bạn tỉnh ngủ nhanh nhất?",
     type: "mc",
-    options: ["Mô hình hóa thông tin công trình để thiết kế & quản lý dự án", "Bán hàng trực tuyến", "Quản lý lương nhân viên", "Nấu ăn công nghiệp"],
-    correctAnswer: "Mô hình hóa thông tin công trình để thiết kế & quản lý dự án"
+    options: ["Chào buổi sáng!", "Cà phê không?", "Sếp đang tìm bạn.", "Hôm nay nghỉ nhé!"],
+    correctAnswer: "Sếp đang tìm bạn."
   }, {
-    question: "Đúng hay Sai: AS/NZS 5131 là tiêu chuẩn gia công & lắp dựng kết cấu thép (Úc/New Zealand).",
-    type: "tf",
-    options: ["Đúng", "Sai"],
-    correctAnswer: "Đúng"
-  }, {
-    question: "EN 1090 liên quan đến sản phẩm gì?",
+    question: "Một cây thép có thể đứng vững nhờ…",
     type: "mc",
-    options: ["Kết cấu thép và nhôm (tiêu chuẩn châu Âu)", "Đồ nội thất gỗ", "Thiết bị điện gia dụng", "Vật liệu nhựa dân dụng"],
-    correctAnswer: "Kết cấu thép và nhôm (tiêu chuẩn châu Âu)"
+    options: ["Chính nó", "Sự liên kết","May mắn","Cà phê 😂" ],
+    correctAnswer: "Sự liên kết"
+  }, {
+    question: "CÂU NÓI ĐÁNG SỢ NHẤT TRONG CÔNG TY LÀ ?",
+    type: "mc",
+    options: ["Mai họp nhé", "Có một việc nhỏ thôi", "Anh/chị cần em hỗ trợ một chút", "Em rảnh không?"],
+    correctAnswer: "Em rảnh không?"
   }, {
     question: "Công đoạn Shot Blasting dùng để làm gì?",
     type: "mc",
