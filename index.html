@@ -111,75 +111,75 @@ const DEFAULT_CORRECT_MESSAGES = ["Quá dữ! Bộ não này được bảo trì
 const DEFAULT_WRONG_MESSAGES = ["Ủa? Tự tin dữ vậy?", "Đáp án rất hay... nhưng không đúng.", "Não đang loading, vui lòng thử lại.", "Gần rồi... nhưng vẫn chưa đủ gần.", "Câu trả lời này đã được gửi vào bộ phận... sai.", "Không sao, Einstein cũng từng có ngày nghỉ.", "Hãy bình tĩnh. Công ty vẫn còn nhiều ô lắm."];
 function defaultPuzzles() {
   const p = [{
-    question: "🏗️ World Steel được thành lập vào năm nào?",
+    question: "World Steel chuyên về lĩnh vực gì?",
     type: "mc",
-    options: ["2012", "2010", "2009", "2016"],
-    correctAnswer: "2012"
+    options: ["Gia công kết cấu thép", "Kinh doanh bất động sản", "Sản xuất bánh kẹo", "Trồng trọt nông nghiệp"],
+    correctAnswer: "Gia công kết cấu thép"
   }, {
-    question: '"🎂 Năm 2026, World Steel kỷ niệm bao nhiêu năm thành lập?',
+    question: '"Thép kết cấu" trong tiếng Anh là gì?',
     type: "mc",
-    options: ["14 năm", "8 năm", "20 năm", "12 năm"],
-    correctAnswer: "14 năm"
+    options: ["Structural Steel", "Sweet Metal", "Steel Sweet", "Structure Only"],
+    correctAnswer: "Structural Steel"
   }, {
     question: "PEB là viết tắt của gì?",
     type: "mc",
     options: ["Pre-Engineered Building", "Personal Energy Board", "Public Electric Base", "Pre-Excavated Basement"],
     correctAnswer: "Pre-Engineered Building"
   }, {
-    question: "🏭 Nhà máy World Steel có diện tích khoảng bao nhiêu m²?",
+    question: "Đâu là một tiêu chuẩn gia công kết cấu thép quốc tế mà công ty áp dụng?",
     type: "mc",
-    options: ["20.000 m²", "25.000 m²", "24.000 m²", "35.000 m²"],
-    correctAnswer: "20.000 m²"
+    options: ["AS/NZS 5131", "ISO 9001-Bakery", "HACCP", "IATF Food Safety"],
+    correctAnswer: "AS/NZS 5131"
   }, {
-    question: "🏆 Hãy kể tên ít nhất 3 chứng nhận ISO mà World Steel đang áp dụng.",
-    type: "text",
-    options: [],
-    correctAnswer: "ISO 9001, ISO 14001, ISO 45001"
-  }, {
-    question: "Khi bạn gửi email cho công ty bạn đang làm, bạn viết To “WORLD…” – bạn viết thiếu chữ gì?",
+    question: "BIM được sử dụng để làm gì?",
     type: "mc",
-    options: ["CUP 🏆", "STEEL 🔩", "steel 🔩", " STAR ⭐"],
-    correctAnswer: "STEEL 🔩"
+    options: ["Mô hình hóa thông tin công trình để thiết kế & quản lý dự án", "Bán hàng trực tuyến", "Quản lý lương nhân viên", "Nấu ăn công nghiệp"],
+    correctAnswer: "Mô hình hóa thông tin công trình để thiết kế & quản lý dự án"
   }, {
-    question: "Vào mỗi buổi sáng đến công ty, câu nào khiến các bạn tỉnh ngủ nhanh nhất?",
-    type: "mc",
-    options: ["Chào buổi sáng!", "Cà phê không?", "Sếp đang tìm bạn.", "Hôm nay nghỉ nhé!"],
-    correctAnswer: "Sếp đang tìm bạn."
-  }, {
-    question: "Một cây thép có thể đứng vững nhờ…",
-    type: "mc",
-    options: ["Chính nó", "Sự liên kết", "May mắn", "Cà phê 😂"],
-    correctAnswer: "Sự liên kết"
-  }, {
-    question: "ĐÂY LÀ HÌNH ẢNH CỦA DỰ ÁN NÀO? ĐỊA ĐIỂM DỰ ÁN",
-    type: "text",
-    options: [],
-    correctAnswer: "M&D WAREHOUSE PROJECT – THAILAND"
-  }, {
-    question: "CÂU NÓI ĐÁNG SỢ NHẤT TRONG CÔNG TY LÀ ?",
-    type: "mc",
-    options: ["Mai họp nhé", "Có một việc nhỏ thôi", "Anh/chị cần em hỗ trợ một chút", "Em rảnh không?"],
-    correctAnswer: "Em rảnh không?"
-  }, {
-    question: '"Khi Sếp hỏi “Mọi người có ý kiến gì không?”, phản ứng phổ biến nhất là:',
-    type: "mc",
-    options: ["Đưa ra 5 ý tưởng", "Đưa ra 3 ý tưởng", "Im lặng suy nghĩ", "Nhìn sang đồng nghiệp xem ai dám nói trước"],
-    correctAnswer: "Nhìn sang đồng nghiệp xem ai dám nói trước"
-  }, {
-    question: '"TRONG 15 GIÂY KỂ TÊN 2 DỰ ÁN TỔNG THẦU, ĐỊA ĐIỂM 2 DỰ ÁN NÀY TỪ ĐẦU NĂM 2026 ĐẾN NAY.',
+    question: "Đúng hay Sai: AS/NZS 5131 là tiêu chuẩn gia công & lắp dựng kết cấu thép (Úc/New Zealand).",
     type: "tf",
-    options: ["ĐÚNG", "SAI"],
-    correctAnswer: "ĐÚNG"
+    options: ["Đúng", "Sai"],
+    correctAnswer: "Đúng"
   }, {
-    question: "ĐUỔI HÌNH BẮT CHỮ",
+    question: "EN 1090 liên quan đến sản phẩm gì?",
+    type: "mc",
+    options: ["Kết cấu thép và nhôm (tiêu chuẩn châu Âu)", "Đồ nội thất gỗ", "Thiết bị điện gia dụng", "Vật liệu nhựa dân dụng"],
+    correctAnswer: "Kết cấu thép và nhôm (tiêu chuẩn châu Âu)"
+  }, {
+    question: "Công đoạn Shot Blasting dùng để làm gì?",
+    type: "mc",
+    options: ["Làm sạch bề mặt thép trước khi sơn", "Cắt thép thành tấm mỏng", "Hàn hai tấm thép lại với nhau", "Đóng gói sản phẩm"],
+    correctAnswer: "Làm sạch bề mặt thép trước khi sơn"
+  }, {
+    question: "Welding là gì?",
+    type: "mc",
+    options: ["Hàn - phương pháp nối kim loại bằng nhiệt", "Sơn phủ bề mặt", "Đo đạc kích thước", "Vận chuyển hàng hóa"],
+    correctAnswer: "Hàn - phương pháp nối kim loại bằng nhiệt"
+  }, {
+    question: "CNC dùng để làm gì trong sản xuất?",
+    type: "mc",
+    options: ["Gia công cắt/khoan tự động bằng máy tính điều khiển số", "Lưu trữ dữ liệu kế toán", "Quản lý email công ty", "Thiết kế logo"],
+    correctAnswer: "Gia công cắt/khoan tự động bằng máy tính điều khiển số"
+  }, {
+    question: '"Structural Steel" nghĩa là gì?',
+    type: "mc",
+    options: ["Thép dùng làm khung chịu lực cho công trình", "Thép trang trí nội thất", "Thép dùng làm đồ gia dụng", "Thép tái chế từ vỏ lon"],
+    correctAnswer: "Thép dùng làm khung chịu lực cho công trình"
+  }, {
+    question: '"Fabrication" trong ngành thép nghĩa là gì?',
+    type: "mc",
+    options: ["Quá trình gia công/chế tạo kết cấu thép từ nguyên liệu", "Quá trình vận chuyển thép", "Quá trình bán lẻ thép", "Quá trình tái chế giấy"],
+    correctAnswer: "Quá trình gia công/chế tạo kết cấu thép từ nguyên liệu"
+  }, {
+    question: "Một ưu điểm nổi bật của thép kết cấu là gì?",
+    type: "mc",
+    options: ["Độ bền cao, thi công nhanh", "Dễ tan chảy ở nhiệt độ phòng", "Không thể tái chế", "Rất nhẹ như giấy"],
+    correctAnswer: "Độ bền cao, thi công nhanh"
+  }, {
+    question: "Câu hỏi vui: Loại thép nào không bao giờ... bị gỉ sét? (gõ câu trả lời)",
     type: "text",
     options: [],
-    correctAnswer: "WORLD STEEL"
-  }, {
-    question: "ĐÂY LÀ AI?",
-    type: "tf",
-    options: ["ĐÚNG", "SAI"],
-    correctAnswer: "ĐÚNG"
+    correctAnswer: "inox"
   }];
   return p.map((item, i) => ({
     id: i + 1,
@@ -503,7 +503,7 @@ function PuzzleModal({
     className: "mb-5 text-xs font-semibold uppercase tracking-wide text-slate-500"
   }, feedback.correct ? `🔓 Đã mở khóa ô #${String(activePuzzle.id).padStart(2, "0")}!` : `🔒 Ô #${String(activePuzzle.id).padStart(2, "0")} vẫn đang khóa!`), /*#__PURE__*/React.createElement("button", {
     onClick: feedback.correct ? closeModal : retryAnswer,
-    className: "w-full rounded-lg bg-white py-2.5 text-sm font-bold uppercase tracking-wide text-white hover:bg-slate-200"
+    className: "w-full rounded-lg bg-[#A50000] py-2.5 text-sm font-bold uppercase tracking-wide text-white hover:bg-[#c62828]"
   }, feedback.correct ? "Tiếp Tục" : "Thử Lại"))));
 }
 function WinModal({
